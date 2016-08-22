@@ -1,0 +1,35 @@
+<html>
+	<head>
+		<title>Weekend Weather</title>
+	</head>
+	<link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+	<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='stylesheet.css') }}">
+	<body>
+		<h1>
+			Gunks
+		</h1>
+	<table>
+		<col width="100px">
+		<col width="50%">
+		<col width="50%">
+		<tr>
+			<th>Day</th>
+			<th>Chance of Precipitation</th>
+			<th>High Temperature</th>
+		</tr>
+		{% for entry in result %}
+		<tr>
+			<td class="day"><p>{{ entry['day'] }}</p></td>
+			<td bgcolor={{ entry['rain']['color'] }}>
+				<div class="main">{{ "%.0f" % entry['rain']['mean'] }}% </div> 
+				<div class="secondary">&sigma;:{{ "%.1f" % entry['rain']['dev'] }}</div>
+			</td>
+			<td bgcolor={{ entry['temp']['color'] }}>
+				<div class="main">{{ "%.0f" % entry['temp']['mean'] }}&degF</div>
+				<div class="secondary">&sigma;: {{ "%.1f" % entry['temp']['dev'] }}</div>
+			</td>
+		</tr>
+		{% endfor %}
+	</table>
+	</body>
+</html>

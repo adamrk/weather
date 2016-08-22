@@ -24,7 +24,7 @@ def previous_day(day):
 ############## NOAA ####################
 
 # To extract the temp in two steps
-regex_temp_sentence = re.compile('high near -?\d{1,3}')
+regex_temp_sentence = re.compile('(H|h)igh near -?\d{1,3}')
 regex_temp_digits = re.compile('-?\d{1,3}')
 
 def get_temp(string):
@@ -60,9 +60,9 @@ def get_noaa_temp_rain(soup):
     daily_forecasts = map(lambda x: {'day' : unicode(x.div.b.string), 'forecast' : unicode(x.find_all('div')[1].string)}, body.contents[1:-1])
     daily_forecasts = filter(lambda x: x['day'].find('Night') < 0 and x['day'].find('Tonight') < 0, daily_forecasts)
     daily_high_rain = map(lambda x: {'day': x['day'], 'temp': int(get_temp(x['forecast'])), 'rain': int(get_rain(x['forecast']))}, daily_forecasts)
-    if 'Today' in map(lambda x: x['day'], daily_high_rain):
-        last_day = daily_high_rain[1]['day']
-        daily_high_rain[0]['day'] = previous_day(last_day)
+    # sometimes current day is listed as today or this afternoon. change based on later dates.
+    last_day = daily_high_rain[1]['day']
+    daily_high_rain[0]['day'] = previous_day(last_day)
     return daily_high_rain[:7]
 
 ################## WUnderground ##################
@@ -101,7 +101,7 @@ def get_owm_temp_rain(json):
 try:
     fore_api_key = os.environ['FORE_API_KEY']
 except KeyError:
-    print "please set the FORECAST_API_KEY for forecast.ai"
+    print "please set the FORE_API_KEY for forecast.ai"
     exit()
 
 def get_fore_json():

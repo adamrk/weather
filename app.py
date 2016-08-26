@@ -3,14 +3,20 @@
 from flask import Flask, jsonify, make_response, render_template
 from extract import get_data, get_temp_rain, agg_data
 from color import temp_to_color, rain_to_color
+import time
+from datetime import date, timedelta
 
 app = Flask(__name__)
 
 data = get_data()
 temp_rain = get_temp_rain(data)
+today = date.today()
+one_day = timedelta(days=1)
+dates = filter(lambda x: x.strftime('%A') in ['Saturday', 'Sunday'], map(lambda x: today + x*one_day, range(7)))
+
 result = []
-for x in ['Saturday', 'Sunday']:
-	result.append({'day':x, 'rain':agg_data(temp_rain, x, 'rain'), 'temp':agg_data(temp_rain, x, 'temp')})
+for x in dates:
+	result.append({'date':x, 'day':x.strftime('%A'), 'rain':agg_data(temp_rain, x, 'rain'), 'temp':agg_data(temp_rain, x, 'temp')})
 
 # adding colors
 for x in result:
@@ -33,3 +39,15 @@ def not_found(error):
 
 if __name__ == '__main__':
 	app.run(debug=True)
+	while(True):
+		data = get_data()
+		temp_rain = get_temp_rain(data)
+		result = []
+		for x in ['Saturday', 'Sunday']:
+			result.append({'day':x, 'rain':agg_data(temp_rain, x, 'rain'), 'temp':agg_data(temp_rain, x, 'temp')})
+
+		# adding colors
+		for x in result:
+			x['temp']['color'] = temp_to_color(x['temp']['mean'])
+			x['rain']['color'] = rain_to_color(x['rain']['mean'])
+		time.sleep(3600)

@@ -5,7 +5,7 @@ import re
 import requests
 import os
 from urllib2 import urlopen
-from datetime import date
+from datetime import date, datetime, timedelta
 #from urlparse import urlunparse
 
 
@@ -63,7 +63,18 @@ def get_noaa_temp_rain(soup):
     # sometimes current day is listed as today or this afternoon. change based on later dates.
     last_day = daily_high_rain[1]['day']
     daily_high_rain[0]['day'] = previous_day(last_day)
-    return daily_high_rain[:7]
+    # find if first day is today or tomorrow. Then assign a date to each element
+    curr_date = date.today()
+    one_day = timedelta(days=1)
+    if daily_high_rain[0]['day'] == curr_date.strftime('%A'):
+        first_date = curr_date
+    else:
+        first_date = curr_date + one_day
+
+    for i in range(len(daily_high_rain)):
+        daily_high_rain[i]['date'] = first_date + (one_day*i)
+
+    return daily_high_rain[:9]
 
 ################## WUnderground ##################
 try:
@@ -78,8 +89,12 @@ def get_wu_json():
 
 def get_wu_temp_rain(json):
     daily_forecasts = json['forecast']['simpleforecast']['forecastday']
-    daily_high_rain = map(lambda x: {'day': x['date']['weekday'], 'temp': int(x['high']['fahrenheit']), 'rain': int(x['pop'])}, daily_forecasts)
-    return daily_high_rain[:7]
+    daily_high_rain = map(lambda x: {
+        'day': x['date']['weekday'], 
+        'temp': int(x['high']['fahrenheit']), 
+        'rain': int(x['pop']),
+        'date': date(x['date']['year'], x['date']['month'], x['date']['day'])}, daily_forecasts)
+    return daily_high_rain[:9]
 """
 ################## Open Weather Map ##########################
 try:
@@ -110,8 +125,12 @@ def get_fore_json():
 
 def get_fore_temp_rain(json):
     daily_forecasts = json['daily']['data']
-    daily_high_rain = map(lambda x: {'day': date.fromtimestamp(x['time']).strftime('%A'), 'temp': int(x['temperatureMax']), 'rain': int(float(x['precipProbability'])*100) }, daily_forecasts)
-    return daily_high_rain[:7]
+    daily_high_rain = map(lambda x: {
+        'day': date.fromtimestamp(x['time']).strftime('%A'), 
+        'temp': int(x['temperatureMax']), 
+        'rain': int(float(x['precipProbability'])*100),
+        'date': date.fromtimestamp(x['time']) }, daily_forecasts)
+    return daily_high_rain[:9]
 
 
 ######################## Collecting and Aggregating ###########################
@@ -127,14 +146,16 @@ def get_temp_rain(data):
     fore_tr = get_fore_temp_rain(data['fore'])
     return {'noaa': noaa_tr, 'wu': wu_tr, 'fore': fore_tr}
 
-def agg_data(data, day, temp_rain):
+def agg_data(data, date, temp_or_rain):
     values = []
+    num_values = 0
     for x in data.values():
         for y in x:
             if y['day'] == day:
-                values.append(y[temp_rain])
-    mean = float(sum(values)) / len(data)
-    dev = pow(sum(map(lambda x: pow(x - mean, 2), values)) / (len(data) - 1), 0.5)
+                values.append(y[temp_or_rain])
+                num_values += 1
+    mean = float(sum(values)) / num_values
+    dev = pow(sum(map(lambda x: pow(x - mean, 2), values)) / (num_values - 1), 0.5)
     return {'mean': mean, 'dev': dev}
 
 def print_data():
@@ -142,19 +163,19 @@ def print_data():
     noaa_data = get_noaa_temp_rain(soup)
     print 'data from NOAA:'
     for x in noaa_data:
-        print 'on %s the temp is %d and rain is %d' % (x['day'], x['temp'], x['rain'])
+        print 'on %s (%s) the temp is %d and rain is %d' % (x['day'], x['date'].strftime('%a, %b, %d'), x['temp'], x['rain'])
 
     json = get_wu_json()
     wu_data = get_wu_temp_rain(json)
     print 'data from WUnderground:'
     for x in wu_data:
-        print 'on %s the temp is %d and rain is %d' % (x['day'], x['temp'], x['rain'])
+        print 'on %s (%s) the temp is %d and rain is %d' % (x['day'], x['date'].strftime('%a, %b, %d'), x['temp'], x['rain'])
 
     json2 = get_fore_json()
     fore_data = get_fore_temp_rain(json2)
     print 'data from Forecast.ai:'
     for x in fore_data:
-        print 'on %s the temp is %d and rain is %d' % (x['day'], x['temp'], x['rain'])
+        print 'on %s (%s) the temp is %d and rain is %d' % (x['day'], x['date'].strftime('%a, %b, %d'), x['temp'], x['rain'])
 
 if  __name__ == "__main__":
     print_data()    

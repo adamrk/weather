@@ -1,9 +1,11 @@
-#! venv/bin/python
+#! venv/bin/python  
 
+import sys
 import bs4
 import re
 import requests
 import os
+import json
 from urllib2 import urlopen
 from datetime import date, datetime, timedelta
 #from urlparse import urlunparse
@@ -48,9 +50,14 @@ def get_rain(string):
     return result
 
 
-def get_noaa_soup():
-    html = urlopen("http://forecast.weather.gov/MapClick.php?lat=41.747589209000466&lon=-74.08680975599964")
-    return bs4.BeautifulSoup(html, 'html.parser')
+def get_noaa_soup(offline = False):
+    if offline:
+        file = open('sample_data/sample_noaa_fake.html', 'r')
+        result = bs4.BeautifulSoup(file, 'html.parser')
+    else:
+        html = urlopen("http://forecast.weather.gov/MapClick.php?lat=41.747589209000466&lon=-74.08680975599964")
+        result = bs4.BeautifulSoup(html, 'html.parser')
+    return result
 
 
 def get_noaa_temp_rain(soup):
@@ -64,7 +71,8 @@ def get_noaa_temp_rain(soup):
     last_day = daily_high_rain[1]['day']
     daily_high_rain[0]['day'] = previous_day(last_day)
     # find if first day is today or tomorrow. Then assign a date to each element
-    curr_date = date.today()
+    date_string = unicode(soup.find(id='about_forecast').find_all(attrs={'class':'fullRow'})[1].find(attrs={'class':'right'}).string)
+    curr_date = datetime.strptime(date_string, '%I:%M %p EDT %b %d, %Y').date()
     one_day = timedelta(days=1)
     if daily_high_rain[0]['day'] == curr_date.strftime('%A'):
         first_date = curr_date
@@ -83,9 +91,14 @@ except KeyError:
     print "please set the API_KEY to for wunderground."
     exit()
 
-def get_wu_json():
-    response = requests.get('http://api.wunderground.com/api/%s/forecast10day/q/NY/New_Paltz.json' % api_key)
-    return response.json()
+def get_wu_json(offline = False):
+    if offline:
+        file = open('sample_data/sample_wu.json', 'r')
+        result = json.load(file)
+    else:
+        response = requests.get('http://api.wunderground.com/api/%s/forecast10day/q/NY/New_Paltz.json' % api_key)
+        result = response.json()
+    return result
 
 def get_wu_temp_rain(json):
     daily_forecasts = json['forecast']['simpleforecast']['forecastday']
@@ -119,9 +132,14 @@ except KeyError:
     print "please set the FORE_API_KEY for forecast.ai"
     exit()
 
-def get_fore_json():
-    response = requests.get('https://api.forecast.io/forecast/%s/41.747589,-74.086807' % fore_api_key )
-    return response.json()
+def get_fore_json(offline = False):
+    if offline:
+        file = open('sample_data/sample_fore.json', 'r')
+        result = json.load(file)
+    else:
+        response = requests.get('https://api.forecast.io/forecast/%s/41.747589,-74.086807' % fore_api_key )
+        result = response.json()
+    return result
 
 def get_fore_temp_rain(json):
     daily_forecasts = json['daily']['data']
@@ -134,10 +152,10 @@ def get_fore_temp_rain(json):
 
 
 ######################## Collecting and Aggregating ###########################
-def get_data():
-    soup = get_noaa_soup()
-    json1 = get_wu_json()
-    json2 = get_fore_json()
+def get_data(**kwargs):
+    soup = get_noaa_soup(**kwargs)
+    json1 = get_wu_json(**kwargs)
+    json2 = get_fore_json(**kwargs)
     return {'noaa': soup, 'wu': json1, 'fore': json2}
 
 def get_temp_rain(data):
@@ -151,31 +169,32 @@ def agg_data(data, date, temp_or_rain):
     num_values = 0
     for x in data.values():
         for y in x:
-            if y['day'] == day:
+            if y['date'] == date:
                 values.append(y[temp_or_rain])
                 num_values += 1
     mean = float(sum(values)) / num_values
     dev = pow(sum(map(lambda x: pow(x - mean, 2), values)) / (num_values - 1), 0.5)
     return {'mean': mean, 'dev': dev}
 
-def print_data():
-    soup = get_noaa_soup()
+def print_data(**kwargs):
+    soup = get_noaa_soup(**kwargs)
     noaa_data = get_noaa_temp_rain(soup)
     print 'data from NOAA:'
     for x in noaa_data:
         print 'on %s (%s) the temp is %d and rain is %d' % (x['day'], x['date'].strftime('%a, %b, %d'), x['temp'], x['rain'])
 
-    json = get_wu_json()
+    json = get_wu_json(**kwargs)
     wu_data = get_wu_temp_rain(json)
     print 'data from WUnderground:'
     for x in wu_data:
         print 'on %s (%s) the temp is %d and rain is %d' % (x['day'], x['date'].strftime('%a, %b, %d'), x['temp'], x['rain'])
 
-    json2 = get_fore_json()
+    json2 = get_fore_json(**kwargs)
     fore_data = get_fore_temp_rain(json2)
     print 'data from Forecast.ai:'
     for x in fore_data:
         print 'on %s (%s) the temp is %d and rain is %d' % (x['day'], x['date'].strftime('%a, %b, %d'), x['temp'], x['rain'])
 
 if  __name__ == "__main__":
-    print_data()    
+    offline = len(sys.argv) == 2 and sys.argv[1] == 'offline'
+    print_data(offline = offline)    

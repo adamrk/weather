@@ -19,8 +19,7 @@
 		</tr>
 		{% for entry in result %}
 		<tr>
-			<!working here!!!!!>
-			<td class="day"><p>{{ "%s, %d" % (entry['day']  }}</p></td>
+			<td class="day"><p>{{ "%s, %s" % (entry['day'], entry['date'].strftime('%d'))  }}</p></td>
 			<td bgcolor={{ entry['rain']['color'] }}>
 				<div class="main">{{ "%.0f" % entry['rain']['mean'] }}% </div> 
 				<div class="secondary">&sigma;:{{ "%.1f" % entry['rain']['dev'] }}</div>

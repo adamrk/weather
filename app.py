@@ -4,13 +4,19 @@ from flask import Flask, jsonify, make_response, render_template
 from extract import get_data, get_temp_rain, agg_data
 from color import temp_to_color, rain_to_color
 import time
+import sys
 from datetime import date, timedelta
 
 app = Flask(__name__)
 
-data = get_data()
+offline = len(sys.argv) == 2 and sys.argv[1] == 'offline'
+data = get_data(offline = offline)
 temp_rain = get_temp_rain(data)
-today = date.today()
+# if offline fix date to sample data date
+if offline:
+	today = date(2016, 8, 26)
+else:
+	today = date.today()
 one_day = timedelta(days=1)
 dates = filter(lambda x: x.strftime('%A') in ['Saturday', 'Sunday'], map(lambda x: today + x*one_day, range(7)))
 

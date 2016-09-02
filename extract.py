@@ -14,9 +14,17 @@ from datetime import date, datetime, timedelta
 """
 TODO:
 
-    add some unittests
+    Add other locations
+    Take care of NOAA on holidays - e.g. They will say 'Labor Day' instead of 'Monday'
+    Make API calls on different threads
+
 
 """
+
+locations = {
+    'Gunks' : {'lat': 41.747589209000466, 'lng': -74.08680975599964, 'wu_name': 'NY/New_Paltz'},
+    'Red River Gorge' : {"lat" : 37.7950836, "lng" : -83.70408069999999, 'wu_name': 'KY/Slade'}
+}
 
 def previous_day(day):
     days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -50,18 +58,18 @@ def get_rain(string):
     return result
 
 
-def get_noaa_soup(offline = False):
+def get_noaa_soup(location, offline = False):
     if offline:
         file = open('sample_data/sample_noaa_fake.html', 'r')
         result = bs4.BeautifulSoup(file, 'html.parser')
     else:
-        html = urlopen("http://forecast.weather.gov/MapClick.php?lat=41.747589209000466&lon=-74.08680975599964")
+        html = urlopen("http://forecast.weather.gov/MapClick.php?lat=%0.6f&lon=%0.6f" % (locations[location]['lat'], locations[location]['lng']))
         result = bs4.BeautifulSoup(html, 'html.parser')
     return result
 
 
 def get_noaa_temp_rain(soup):
-    """ Return an array of dicts with attributes 'day', 'temp', 'rain' """
+    """ Return an array of dicts with attributes 'date', 'day', 'temp', 'rain' """
 
     body = soup.find(id='detailed-forecast-body')
     daily_forecasts = map(lambda x: {'day' : unicode(x.div.b.string), 'forecast' : unicode(x.find_all('div')[1].string)}, body.contents[1:-1])
@@ -91,12 +99,12 @@ except KeyError:
     print "please set the API_KEY to for wunderground."
     exit()
 
-def get_wu_json(offline = False):
+def get_wu_json(location, offline = False):
     if offline:
         file = open('sample_data/sample_wu.json', 'r')
         result = json.load(file)
     else:
-        response = requests.get('http://api.wunderground.com/api/%s/forecast10day/q/NY/New_Paltz.json' % api_key)
+        response = requests.get('http://api.wunderground.com/api/%s/forecast10day/q/%s.json' % (api_key, locations[location]['wu_name']))
         result = response.json()
     return result
 
@@ -132,12 +140,12 @@ except KeyError:
     print "please set the FORE_API_KEY for forecast.ai"
     exit()
 
-def get_fore_json(offline = False):
+def get_fore_json(location, offline = False):
     if offline:
         file = open('sample_data/sample_fore.json', 'r')
         result = json.load(file)
     else:
-        response = requests.get('https://api.forecast.io/forecast/%s/41.747589,-74.086807' % fore_api_key )
+        response = requests.get('https://api.forecast.io/forecast/%s/%0.6f,%0.6f' % (fore_api_key, locations[location]['lat'], locations[location]['lng'] ) )
         result = response.json()
     return result
 

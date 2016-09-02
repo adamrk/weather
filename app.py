@@ -1,6 +1,6 @@
 #! venv/bin/python
 
-from flask import Flask, jsonify, make_response, render_template
+from flask import Flask, jsonify, make_response, render_template, request
 from extract import get_data, get_temp_rain, agg_data, locations
 from color import temp_to_color, rain_to_color
 import time
@@ -10,8 +10,9 @@ from datetime import date, timedelta
 """
 TODO:
 	change date display to be small.
-	choose location based on get request.
+	add links to other locations.
 	update data every hour.
+	allow user to set days they want.
 """
 
 app = Flask(__name__)
@@ -45,11 +46,13 @@ for loc in locations:
 
 @app.route('/')
 def index():
-	return jsonify(result['Gunks'])
+	loc = request.args.get('crag', 'Gunks')
+	return jsonify({'crag': loc, 'results': result[loc]})
 
 @app.route('/page')
 def page():
-	return render_template('main.html', result=result['Gunks'])
+	loc = request.args.get('crag', 'Gunks')
+	return render_template('main.html', title=loc, result=result[loc])
 
 @app.errorhandler(404)
 def not_found(error):

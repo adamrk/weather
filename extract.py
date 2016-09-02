@@ -14,10 +14,8 @@ from datetime import date, datetime, timedelta
 """
 TODO:
 
-    Add other locations
     Take care of NOAA on holidays - e.g. They will say 'Labor Day' instead of 'Monday'
     Make API calls on different threads
-
 
 """
 
@@ -73,7 +71,7 @@ def get_noaa_temp_rain(soup):
 
     body = soup.find(id='detailed-forecast-body')
     daily_forecasts = map(lambda x: {'day' : unicode(x.div.b.string), 'forecast' : unicode(x.find_all('div')[1].string)}, body.contents[1:-1])
-    daily_forecasts = filter(lambda x: x['day'].find('Night') < 0 and x['day'].find('Tonight') < 0, daily_forecasts)
+    daily_forecasts = filter(lambda x: x['day'].find('Night') < 0 and x['day'].find('Tonight') < 0 and x['day'].find('night') < 0, daily_forecasts)
     daily_high_rain = map(lambda x: {'day': x['day'], 'temp': int(get_temp(x['forecast'])), 'rain': int(get_rain(x['forecast']))}, daily_forecasts)
     # sometimes current day is listed as today or this afternoon. change based on later dates.
     last_day = daily_high_rain[1]['day']

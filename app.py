@@ -52,7 +52,9 @@ def not_found(error):
 if __name__ == '__main__':
 	locurls = map(lambda x: (x, "/page?" + urlencode({'crag': x})), locations)
 
-	offline = len(sys.argv) == 2 and sys.argv[1] == 'offline'
+	offline = 'offline' in sys.argv
+	noloop = ('noloop' in sys.argv) or offline
+
 
 	# if offline fix date to sample data date
 	if offline:
@@ -79,6 +81,7 @@ if __name__ == '__main__':
 			print "data updated"
 
 	datathread = Thread(target=threadfunc)
-	datathread.start()
+	if not noloop:
+		datathread.start()
 
 	app.run(debug=True)

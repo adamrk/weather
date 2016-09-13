@@ -1,6 +1,7 @@
 #! venv/bin/python
 
 from flask import Flask, jsonify, make_response, render_template, request, redirect
+from flask_sqlalchemy import SQLAlchemy
 from extract import get_data, get_temp_rain, agg_data, locations
 from color import temp_to_color, rain_to_color
 
@@ -16,6 +17,8 @@ TODO:
 	add logging.
 	allow user to set days they want.
 """
+
+app = Flask(__name__)
 
 def update_data():
 	for loc in locations:
@@ -33,7 +36,9 @@ def update_data():
 			x['temp']['color'] = temp_to_color(x['temp']['mean'])
 			x['rain']['color'] = rain_to_color(x['rain']['mean'])
 
-app = Flask(__name__)
+
+
+
 
 @app.route('/')
 def index():

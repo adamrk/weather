@@ -16,6 +16,8 @@ TODO:
 
     Take care of NOAA on holidays - e.g. They will say 'Labor Day' instead of 'Monday'
     Make API calls on different threads
+    Record results in database
+    Add more locations
 
 """
 

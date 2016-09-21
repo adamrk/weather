@@ -6,6 +6,7 @@ import re
 import requests
 import os
 import json
+import db
 from urllib2 import urlopen
 from datetime import date, datetime, timedelta
 #from urlparse import urlunparse
@@ -21,10 +22,14 @@ TODO:
 
 """
 
-locations = {
-    'Gunks' : {'lat': 41.747589209000466, 'lng': -74.08680975599964, 'wu_name': 'NY/New_Paltz'},
-    'Red River Gorge' : {"lat" : 37.7950836, "lng" : -83.70408069999999, 'wu_name': 'KY/Slade'}
-}
+
+# dbcrags = db.session.query(db.Crag)
+# locations = {}
+# for x in dbcrags:
+#     locations[x.name] = {'lat': x.lat / 100.0, # stored as int in db 
+#                          'lng': x.lng / 100.0, # stored as int in db
+#                          'wu_name': x.wu_name}
+
 
 def previous_day(day):
     days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -63,7 +68,8 @@ def get_noaa_soup(location, offline = False):
         file = open('sample_data/sample_noaa_fake.html', 'r')
         result = bs4.BeautifulSoup(file, 'html.parser')
     else:
-        html = urlopen("http://forecast.weather.gov/MapClick.php?lat=%0.6f&lon=%0.6f" % (locations[location]['lat'], locations[location]['lng']))
+        string = "http://forecast.weather.gov/MapClick.php?lat=%0.6f&lon=%0.6f" % (location['lat'], location['lng'])
+        html = urlopen(string)
         result = bs4.BeautifulSoup(html, 'html.parser')
     return result
 
@@ -104,7 +110,8 @@ def get_wu_json(location, offline = False):
         file = open('sample_data/sample_wu.json', 'r')
         result = json.load(file)
     else:
-        response = requests.get('http://api.wunderground.com/api/%s/forecast10day/q/%s.json' % (api_key, locations[location]['wu_name']))
+        response = requests.get('http://api.wunderground.com/api/%s/forecast10day/q/%s.json' % 
+                (api_key, location['wu_name']))
         result = response.json()
     return result
 
@@ -145,7 +152,8 @@ def get_fore_json(location, offline = False):
         file = open('sample_data/sample_fore.json', 'r')
         result = json.load(file)
     else:
-        response = requests.get('https://api.forecast.io/forecast/%s/%0.6f,%0.6f' % (fore_api_key, locations[location]['lat'], locations[location]['lng'] ) )
+        response = requests.get('https://api.forecast.io/forecast/%s/%0.6f,%0.6f' % 
+            (fore_api_key, location['lat'], location['lng'] ) )
         result = response.json()
     return result
 

@@ -1,3 +1,4 @@
+#! venv/bin/python
 
 from sqlalchemy import ( create_engine, 
                          Column, 
@@ -13,6 +14,8 @@ import os
 
 Base = declarative_base()
 engine = create_engine('sqlite:///' + os.environ['DB_PATH'])
+Session = sessionmaker(bind=engine)
+session = Session()
 # print "db path:  "
 # print 'sqlite:///' + os.environ['DB_PATH']
 
@@ -48,9 +51,10 @@ class Forecast(Base):
     crag = relationship("Crag", back_populates="forecasts")
 
     def __repr__(self):
-        return "<Forecast(service=%s, crag=%s, temp=%d, rain=%d, pred_for=%s)>" % (
+        return "<Forecast(service=%s, crag=%s, temp=%d, rain=%d, pred_time=%s, pred_for=%s)>" % (
             self.service, self.crag_id, self.temp, 
-            self.rain, self.pred_for.ascftime("%b %d %y"))
+            self.rain, self.pred_time.strftime("%b %d %y, %H:%M"), 
+            self.pred_for.strftime("%b %d %y"))
 
 class Actual(Base):
     __tablename__ = 'actuals'
@@ -70,8 +74,6 @@ class Actual(Base):
 
 if __name__ == "__main__":
     Base.metadata.create_all(engine)
-    Session = sessionmaker(bind=engine)
-    session = Session()
     crags = [
         Crag(name="Gunks", lat=4174, lng=-7408, wu_name="NY/New_Paltz"),
         Crag(name="Red River Gorge", lat=3779, lng=-8370, wu_name="KY/Slade")
@@ -79,6 +81,7 @@ if __name__ == "__main__":
     for crag in crags:
         session.add(crag)
     session.commit()
+    session.close()
 
 
 

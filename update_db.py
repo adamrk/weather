@@ -1,18 +1,22 @@
-from extract import get_data, get_temp_rain, agg_data
-from db import session, Forecast, Crag
+from extract import (get_data, 
+    get_temp_rain, 
+    agg_data,
+    get_actual_json,
+    get_actual_temp_rain)
+from db import Session, Forecast, Crag, Actual
 from sys import argv
 from datetime import datetime
-#import pdb
 
 offline = 'offline' in argv
 
+session = Session()
 crags = session.query(Crag)
 data = {}
 temp_rain = {}
+session.close()
 
-
-##### Working here database doesn't seem to be updating
 def update_data():
+    session = Session()
     for crag in crags:
         location = {'lat' : crag.lat / 100.0, 'lng' : crag.lng / 100.0, 'wu_name' : crag.wu_name }
         data = get_data(location = {
@@ -31,12 +35,24 @@ def update_data():
                     pred_time=datetime.now(),
                     pred_for=day['date']
                     )
-                print "adding: "
-                print forecast
                 session.add(forecast)
-#    pdb.set_trace()
-    print "committing: "
-    print session.is_active
+    session.commit()
+    session.close()
+
+def update_actual(date):
+    session = Session()
+    for crag in crags:
+        location = {'lat' : crag.lat / 100.0, 'lng' : crag.lng / 100.0}
+        json = get_actual_json(location, date)
+        temp_rain = get_actual_temp_rain(json)
+        actual = Actual(
+            crag_id=crag.id,
+            temp=temp_rain['temp'],
+            rain=temp_rain['rain'],
+            date=date
+            )
+        print actual
+        session.add(actual)
     session.commit()
     session.close()
 

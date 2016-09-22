@@ -123,24 +123,10 @@ def get_wu_temp_rain(json):
         'rain': int(x['pop']),
         'date': date(x['date']['year'], x['date']['month'], x['date']['day'])}, daily_forecasts)
     return daily_high_rain[:9]
-"""
-################## Open Weather Map ##########################
-try:
-    open_api_key = os.environ['OPEN_API_KEY']
-except KeyError:
-    print "please set the OPEN_API_KEY for Open Weather Map"
-    exit()
 
-def get_owm_json():
-    response = requests.get('http://api.openweathermap.org/data/2.5/forecast/daily?lat=41.747589&lon=-74.086807&cnt=7&mode=json&units=imperial&appid=%s' % open_api_key)
-    return response.json()
 
-def get_owm_temp_rain(json):
-    daily_forecasts = json['list']
-    daily_high_rain = map(lambda x: {'day': date.fromtimestamp(x['dt']).strftime("%A"), 'temp': x['temp']['max'], 'rain': x.get('rain') if x.get('rain') else 0}, daily_forecasts)
-    return daily_high_rain
-"""
 ###################### Forecast.ai ###########################
+##### Did they just change their name to DarkSky.net ???? ####
 try:
     fore_api_key = os.environ['FORE_API_KEY']
 except KeyError:
@@ -210,6 +196,23 @@ def print_data(**kwargs):
     print 'data from Forecast.ai:'
     for x in fore_data:
         print 'on %s (%s) the temp is %d and rain is %d' % (x['day'], x['date'].strftime('%a, %b, %d'), x['temp'], x['rain'])
+
+########### Dark Sky for Actual Historical ##############
+def get_actual_json(location, time):
+    string = ("https://api.darksky.net/forecast/%s/%0.4f,%0.4f,%s"
+              "?exclude=currently,minutely,hourly,alerts,flags"
+              % (fore_api_key, location['lat'], location['lng'],
+                 time.strftime("%s") ) )
+    raw = requests.get(string)
+    json = raw.json()
+    return json
+
+def get_actual_temp_rain(json):
+    temp = json['daily']['data'][0]['apparentTemperatureMax']
+    rain = json['daily']['data'][0].get('precipIntensityMax', 0)
+    return {'temp':temp, 'rain':rain}
+
+
 
 if  __name__ == "__main__":
     offline = len(sys.argv) == 2 and sys.argv[1] == 'offline'

@@ -70,7 +70,7 @@ class Actual(Base):
     def __repr__(self):
         return "<Actual(crag=%s, temp=%d, rain=%s, date=%s>" % (
             self.crag_id, self.temp, self.rain, 
-            self.date.ascftime("%b %d %y"))
+            self.date.strftime("%b %d %y"))
 
 if __name__ == "__main__":
     Base.metadata.create_all(engine)

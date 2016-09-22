@@ -9,16 +9,14 @@ from datetime import datetime
 
 offline = 'offline' in argv
 
-session = Session()
-crags = session.query(Crag)
-data = {}
-temp_rain = {}
-session.close()
-
 def update_data():
+    # add current forecasts to db
     session = Session()
+    crags = session.query(Crag)
     for crag in crags:
-        location = {'lat' : crag.lat / 100.0, 'lng' : crag.lng / 100.0, 'wu_name' : crag.wu_name }
+        location = {'lat' : crag.lat / 100.0, ## stored as int in db
+            'lng' : crag.lng / 100.0, ## stored as int in db
+            'wu_name' : crag.wu_name }
         data = get_data(location = {
             'lat' : crag.lat / 100.0,
             'lng' : crag.lng / 100.0,
@@ -40,6 +38,7 @@ def update_data():
     session.close()
 
 def update_actual(date):
+    # add actual weather for date to db
     session = Session()
     for crag in crags:
         location = {'lat' : crag.lat / 100.0, 'lng' : crag.lng / 100.0}

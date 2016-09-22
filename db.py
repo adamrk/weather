@@ -16,9 +16,6 @@ Base = declarative_base()
 engine = create_engine('sqlite:///' + os.environ['DB_PATH'])
 Session = sessionmaker(bind=engine)
 session = Session()
-# print "db path:  "
-# print 'sqlite:///' + os.environ['DB_PATH']
-
 
 class Crag(Base):
     __tablename__ = 'crags'
@@ -73,6 +70,7 @@ class Actual(Base):
             self.date.strftime("%b %d %y"))
 
 if __name__ == "__main__":
+    ## to setup db create all tables and load in the static crag data
     Base.metadata.create_all(engine)
     crags = [
         Crag(name="Gunks", lat=4174, lng=-7408, wu_name="NY/New_Paltz"),

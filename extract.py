@@ -9,7 +9,6 @@ import json
 import db
 from urllib2 import urlopen
 from datetime import date, datetime, timedelta
-#from urlparse import urlunparse
 
 
 """

@@ -6,10 +6,10 @@ from flask import (Flask,
 				   render_template, 
 				   request, 
 				   redirect)
-from flask_sqlalchemy import SQLAlchemy
 from extract import get_data, get_temp_rain, agg_data
 from color import temp_to_color, rain_to_color
 from db import Session, Crag, Forecast
+from sqlalchemy import func
 
 import time
 import sys
@@ -22,7 +22,6 @@ TODO:
 	improve hourly updates (locks).
 	add logging.
 	allow user to set days they want.
-	shift updating to use db.
 """
 
 app = Flask(__name__)
@@ -30,37 +29,58 @@ app = Flask(__name__)
 session = Session()
 locations = session.query(Crag)
 
-def update_data():
-	for loc in locations:
-		data[loc.name] = get_data(location = {'lat': loc.lat / 100,
-											  'lng': loc.lng / 100,
-											  'wu_name': loc.wu_name},
-								  offline = offline)
-		temp_rain[loc.name] = get_temp_rain(data[loc.name])
+def update_data2():
+	services = ["wu", "noaa", "fore"]
+	# filter query to most recent results
+	tr_query = session.query(Forecast)
+	maxtime = session.query(func.max(Forecast.pred_time))
+	maxtime = max([x.pred_time for x in tr_query])
+	#maxtime = max([x.pred_time for x in tr_query.filter(
+	#	Forecast.pred_time > datetime.now() - timedelta(days=1))])
+	results = tr_query.filter(Forecast.pred_time == maxtime)
 
+	# add each result to the temp_rain structure
+	tr = {}
+	for loc in locations:
+		tr[loc.name] = {}
+		for ser in services:
+			tr[loc.name][ser] = []
+	
+	for res in results:
+		crag_name = [x.name for x in 
+			locations.filter(Crag.id == res.crag_id)][0]
+		
+		tr[crag_name][res.service].append({
+			'day': res.pred_for.strftime('%A'),
+			'temp': res.temp,
+			'rain': res.rain,
+			'date': res.pred_for})
+
+	return tr, maxtime
+
+def aggregate(tr):
+	result = {}
 	for loc in locations:
 		result[loc.name] = []
 		for x in dates:
 			result[loc.name].append(
 				{'date':x, 
 				 'day':x.strftime('%A'), 
-				 'rain':agg_data(temp_rain[loc.name], x, 'rain'), 
-				 'temp':agg_data(temp_rain[loc.name], x, 'temp')})
+				 'rain':agg_data(tr[loc.name], x, 'rain'), 
+				 'temp':agg_data(tr[loc.name], x, 'temp')})
 
-	# adding colors
 	for loc in locations:
 		for x in result[loc.name]:
 			x['temp']['color'] = temp_to_color(x['temp']['mean'])
 			x['rain']['color'] = rain_to_color(x['rain']['mean'])
 
+	return result
 
-
-
-
+##################### Defining Views ##########################
 @app.route('/')
 def index():
 	loc = request.args.get('crag', 'Gunks')
-	return jsonify({'crag': loc, 'results': result[loc]})
+	return jsonify({'crag': loc, 'results': aggregated[loc]})
 
 @app.route('/page')
 def page():
@@ -76,7 +96,7 @@ def page():
 		loc = 'Gunks'
 		setdef_link = True
 	return render_template('main.html', title=loc,
-										result=result[loc],
+										result=aggregated[loc],
 										locations=locurls,
 										update=last_update,
 										setdef_link=setdef_link
@@ -94,6 +114,8 @@ def setdefault():
 def not_found(error):
 	return make_response(jsonify({'error': '404 Not found'}), 404)
 
+###################### Exec #############################
+
 if __name__ == '__main__':
 	#locurls = map(lambda x: (x, urlencode({'crag': x})), locations)
 	locurls = [(x.name, urlencode({'crag': x.name})) for x in locations]
@@ -108,22 +130,20 @@ if __name__ == '__main__':
 	else:
 		today = date.today()
 	one_day = timedelta(days=1)
-	dates = filter(lambda x: x.strftime('%A') in ['Saturday', 'Sunday'], map(lambda x: today + x*one_day, range(7)))
-
-	# getting data:
-	data = {}
-	temp_rain = {}
-	result = {}
-	last_update = datetime.now()
-
-	update_data()
+	alldates = [today + x * one_day for x in range(7)]
+	dates = [x for x in alldates if x.strftime('%A') in 
+		['Saturday', 'Sunday']] 
+	
+	temp_rain, last_update = update_data2()
+	aggregated = aggregate(temp_rain)
 
 	def threadfunc():
 		while True:
 			print 'thread running'
 			time.sleep(3600)
 			print "updating data"
-			update_data()
+			temp_rain, last_update = update_data2()
+			aggregated = aggregate(temp_rain)			
 			print "data updated"
 
 	datathread = Thread(target=threadfunc)

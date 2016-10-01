@@ -1,3 +1,5 @@
+#! venv/bin/python
+
 from extract import (get_data, 
     get_temp_rain, 
     agg_data,
@@ -5,14 +7,15 @@ from extract import (get_data,
     get_actual_temp_rain)
 from db import Session, Forecast, Crag, Actual
 from sys import argv
-from datetime import datetime
+from datetime import datetime, timedelta
 
 offline = 'offline' in argv
 
-def update_data():
+def update_forecasts():
     # add current forecasts to db
     session = Session()
     crags = session.query(Crag)
+    updatetime = datetime.now() #all entries to have exact same pred time
     for crag in crags:
         location = {'lat' : crag.lat / 100.0, ## stored as int in db
             'lng' : crag.lng / 100.0, ## stored as int in db
@@ -30,7 +33,7 @@ def update_data():
                     crag_id=crag.id,
                     temp=day['temp'],
                     rain=day['rain'],
-                    pred_time=datetime.now(),
+                    pred_time=updatetime,
                     pred_for=day['date']
                     )
                 session.add(forecast)
@@ -56,22 +59,7 @@ def update_actual(date):
     session.close()
 
 if __name__ == "__main__":
-    update_data()
-
-"""
-        forecast = Forecast()
-    for loc in locations:
-        result[loc] = []
-        for x in dates:
-            result[loc].append(
-                {'date':x, 
-                 'day':x.strftime('%A'), 
-                 'rain':agg_data(temp_rain[loc], x, 'rain'), 
-                 'temp':agg_data(temp_rain[loc], x, 'temp')})
-
-    # adding colors
-    for loc in locations:
-        for x in result[loc]:
-            x['temp']['color'] = temp_to_color(x['temp']['mean'])
-            x['rain']['color'] = rain_to_color(x['rain']['mean'])
-"""
+    if sys.argv[1] == "forecast":
+        update_forecasts()
+    if sys.argv[1] == "actual":
+        update_actual(datetime.today() - timedelta(days=1))

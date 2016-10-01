@@ -10,25 +10,13 @@ import db
 from urllib2 import urlopen
 from datetime import date, datetime, timedelta
 
-
 """
 TODO:
 
     Take care of NOAA on holidays - e.g. They will say 'Labor Day' instead of 'Monday'
     Make API calls on different threads
-    Record results in database
     Add more locations
-
 """
-
-
-# dbcrags = db.session.query(db.Crag)
-# locations = {}
-# for x in dbcrags:
-#     locations[x.name] = {'lat': x.lat / 100.0, # stored as int in db 
-#                          'lng': x.lng / 100.0, # stored as int in db
-#                          'wu_name': x.wu_name}
-
 
 def previous_day(day):
     days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -36,6 +24,7 @@ def previous_day(day):
     return days[(inx - 1) % 7]
 
 ############## NOAA ####################
+## Should probably use the API, but scraping for fun
 
 # To extract the temp in two steps
 regex_temp_sentence = re.compile('(H|h)igh near -?\d{1,3}')
@@ -210,8 +199,6 @@ def get_actual_temp_rain(json):
     temp = json['daily']['data'][0]['apparentTemperatureMax']
     rain = json['daily']['data'][0].get('precipIntensityMax', 0)
     return {'temp':temp, 'rain':rain}
-
-
 
 if  __name__ == "__main__":
     offline = len(sys.argv) == 2 and sys.argv[1] == 'offline'

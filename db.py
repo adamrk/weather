@@ -73,8 +73,18 @@ if __name__ == "__main__":
     ## to setup db create all tables and load in the static crag data
     Base.metadata.create_all(engine)
     crags = [
-        Crag(name="Gunks", lat=4174, lng=-7408, wu_name="NY/New_Paltz"),
-        Crag(name="Red River Gorge", lat=3779, lng=-8370, wu_name="KY/Slade")
+        Crag(name="Gunks", 
+             lat=4174, 
+             lng=-7408, 
+             wu_name="NY/New_Paltz"),
+        Crag(name="Red River Gorge", 
+             lat=3779, 
+             lng=-8370, 
+             wu_name="KY/Slade"),
+        Crag(name="Joshua Tree", 
+             lat=3401, 
+             lng=-11616, 
+             wu_name="CA/Joshua_Tree")
         ]
     for crag in crags:
         session.add(crag)

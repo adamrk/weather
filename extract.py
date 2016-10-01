@@ -74,7 +74,10 @@ def get_noaa_temp_rain(soup):
     daily_high_rain[0]['day'] = previous_day(last_day)
     # find if first day is today or tomorrow. Then assign a date to each element
     date_string = unicode(soup.find(id='about_forecast').find_all(attrs={'class':'fullRow'})[1].find(attrs={'class':'right'}).string)
-    curr_date = datetime.strptime(date_string, '%I:%M %p EDT %b %d, %Y').date()
+    try:
+        curr_date = datetime.strptime(date_string, '%I:%M %p EDT %b %d, %Y').date()
+    except:
+        curr_date = datetime.strptime(date_string, '%I:%M %p PDT %b %d, %Y').date()
     one_day = timedelta(days=1)
     if daily_high_rain[0]['day'] == curr_date.strftime('%A'):
         first_date = curr_date

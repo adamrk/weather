@@ -59,7 +59,7 @@ def update_actual(date):
     session.close()
 
 if __name__ == "__main__":
-    if sys.argv[1] == "forecast":
+    if argv[1] == "forecast":
         update_forecasts()
-    if sys.argv[1] == "actual":
+    if argv[1] == "actual":
         update_actual(datetime.today() - timedelta(days=1))

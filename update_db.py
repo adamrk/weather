@@ -11,13 +11,6 @@ from sys import argv
 from datetime import datetime, timedelta
 import logging
 
-
-log = logging.basicConfig(
-    filename = "app.log",
-    format = "%(levelname)-10s %(asctime)s %(message)s",
-    level = logging.INFO
-)
-
 log = logging.getLogger('app')
 
 offline = 'offline' in argv

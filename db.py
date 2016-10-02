@@ -56,6 +56,7 @@ class Actual(db.Model):
 
 if __name__ == "__main__":
     ## to setup db create all tables and load in the static crag data
+    log.info("creating tables")
     db.create_all()
     crags = [
         Crag(name="Gunks", 
@@ -74,3 +75,4 @@ if __name__ == "__main__":
     for crag in crags:
         db.session.add(crag)
     db.session.commit()
+    log.info("done creating tables")

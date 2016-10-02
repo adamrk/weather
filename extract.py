@@ -204,4 +204,5 @@ def get_actual_temp_rain(json):
 
 if  __name__ == "__main__":
     offline = len(sys.argv) == 2 and sys.argv[1] == 'offline'
-    print_data(offline = offline)    
+    location = {'lat': 41.74, 'lng': -74.08, 'wu_name': 'NY/New_Paltz'}
+    print_data(location = location, offline = offline)    

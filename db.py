@@ -1,6 +1,9 @@
 #! venv/bin/python
 
 from setup import db
+import logging
+
+log = logging.getLogger('app')
 
 class Crag(db.Model):
     #__tablename__ = 'crags'

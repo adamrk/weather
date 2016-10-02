@@ -22,11 +22,14 @@ import os
 """
 TODO:
 	improve hourly updates (locks).
-	add logging.
 	allow user to set days they want.
+	change display timezone
 """
 
 locations = Crag.query.all()
+locurls = [(x.name, urlencode({'crag': x.name})) for x in locations]
+	
+#offline = 'offline' in sys.argv
 
 def update_data(crag_name):
 	services = ["wu", "noaa", "fore"]
@@ -77,10 +80,10 @@ def index():
 @app.route('/page')
 def page():
 	# if offline fix date to sample data date
-	if offline:
-		today = date(2016, 8, 26)
-	else:
-		today = date.today()
+#	if offline:
+#		today = date(2016, 8, 26)
+#	else:
+	today = date.today()
 	# set dates to dates of interest
 	one_day = timedelta(days=1)
 	alldates = [today + x * one_day for x in range(7)]
@@ -126,7 +129,5 @@ def not_found(error):
 
 if __name__ == '__main__':
 	#locurls = map(lambda x: (x, urlencode({'crag': x})), locations)
-	locurls = [(x.name, urlencode({'crag': x.name})) for x in locations]
 	
-	offline = 'offline' in sys.argv
 	app.run(debug=True)

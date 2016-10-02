@@ -5,16 +5,29 @@ from extract import (get_data,
     agg_data,
     get_actual_json,
     get_actual_temp_rain)
-from db import Session, Forecast, Crag, Actual
+from db import Forecast, Crag, Actual
+from setup import db
 from sys import argv
 from datetime import datetime, timedelta
+import logging
+
+
+log = logging.basicConfig(
+    filename = "app.log",
+    format = "%(levelname)-10s %(asctime)s %(message)s",
+    level = logging.INFO
+)
+
+log = logging.getLogger('app')
 
 offline = 'offline' in argv
 
+
+
 def update_forecasts():
+    log.info("start updating forecasts")
     # add current forecasts to db
-    session = Session()
-    crags = session.query(Crag)
+    crags = Crag.query.all()
     updatetime = datetime.now() #all entries to have exact same pred time
     for crag in crags:
         location = {'lat' : crag.lat / 100.0, ## stored as int in db
@@ -36,13 +49,14 @@ def update_forecasts():
                     pred_time=updatetime,
                     pred_for=day['date']
                     )
-                session.add(forecast)
-    session.commit()
-    session.close()
+                db.session.add(forecast)
+    db.session.commit()
+    log.info("finish updating forecasts")
 
 def update_actual(date):
+    log.info("start updating actuals")
     # add actual weather for date to db
-    session = Session()
+    crags = Crag.query.all()
     for crag in crags:
         location = {'lat' : crag.lat / 100.0, 'lng' : crag.lng / 100.0}
         json = get_actual_json(location, date)
@@ -54,9 +68,9 @@ def update_actual(date):
             date=date
             )
         print actual
-        session.add(actual)
-    session.commit()
-    session.close()
+        db.session.add(actual)
+    db.session.commit()
+    log.info("finish updating actual")
 
 if __name__ == "__main__":
     if argv[1] == "forecast":

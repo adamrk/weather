@@ -1,51 +1,36 @@
 #! venv/bin/python
 
-from sqlalchemy import ( create_engine, 
-                         Column, 
-                         Integer, 
-                         String, 
-                         DateTime,
-                         Date,
-                         ForeignKey,
-                         )
-from sqlalchemy.orm import relationship, sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
-import os
+from setup import db
 
-Base = declarative_base()
-engine = create_engine('sqlite:///' + os.environ['DB_PATH'])
-Session = sessionmaker(bind=engine)
-session = Session()
+class Crag(db.Model):
+    #__tablename__ = 'crags'
 
-class Crag(Base):
-    __tablename__ = 'crags'
-
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String)
     ## Note lat and lng are scaled by 100 e.g. 75.65 lat stored as 7565
-    lat = Column(Integer)
-    lng = Column(Integer)
-    wu_name = Column(String)
+    lat = db.Column(db.Integer)
+    lng = db.Column(db.Integer)
+    wu_name = db.Column(db.String)
 
-    forecasts = relationship("Forecast", back_populates='crag')
-    actuals = relationship("Actual", back_populates='crag')
+    #forecasts = db.relationship("Forecast", backref=db.backref('crag'))
+    #actuals = db.relationship("Actual", backref=db.backref('crag'))
 
     def __repr__(self):
         return "<Crag(name=%s, lat=%d, lng=%d, wu_name=%s)>" % (
             self.name, self.lat, self.lng, self.wu_name)
 
-class Forecast(Base):
-    __tablename__ = 'forecasts'
+class Forecast(db.Model):
+    #__tablename__ = 'forecasts'
 
-    id = Column(Integer, primary_key=True)
-    service = Column(String, nullable=False)
-    crag_id = Column(Integer, ForeignKey('crags.id'))
-    temp = Column(Integer)
-    rain = Column(Integer)
-    pred_time = Column(DateTime)
-    pred_for = Column(Date)
+    id = db.Column(db.Integer, primary_key=True)
+    service = db.Column(db.String, nullable=False)
+    crag_id = db.Column(db.Integer, db.ForeignKey('crag.id'))
+    temp = db.Column(db.Integer)
+    rain = db.Column(db.Integer)
+    pred_time = db.Column(db.DateTime)
+    pred_for = db.Column(db.Date)
 
-    crag = relationship("Crag", back_populates="forecasts")
+    crag = db.relationship("Crag", backref=db.backref("forecasts", lazy='dynamic'))
 
     def __repr__(self):
         return "<Forecast(service=%s, crag=%s, temp=%d, rain=%d, pred_time=%s, pred_for=%s)>" % (
@@ -53,16 +38,16 @@ class Forecast(Base):
             self.rain, self.pred_time.strftime("%b %d %y, %H:%M"), 
             self.pred_for.strftime("%b %d %y"))
 
-class Actual(Base):
-    __tablename__ = 'actuals'
+class Actual(db.Model):
+    #__tablename__ = 'actuals'
 
-    id = Column(Integer, primary_key=True)
-    temp = Column(Integer)
-    rain = Column(Integer)
-    date = Column(Date)
-    crag_id = Column(Integer, ForeignKey('crags.id'))
+    id = db.Column(db.Integer, primary_key=True)
+    temp = db.Column(db.Integer)
+    rain = db.Column(db.Integer)
+    date = db.Column(db.Date)
+    crag_id = db.Column(db.Integer, db.ForeignKey('crag.id'))
 
-    crag = relationship("Crag", back_populates="actuals")
+    crag = db.relationship("Crag", backref=db.backref("actuals", lazy='dynamic'))
 
     def __repr__(self):
         return "<Actual(crag=%s, temp=%d, rain=%s, date=%s>" % (
@@ -71,7 +56,7 @@ class Actual(Base):
 
 if __name__ == "__main__":
     ## to setup db create all tables and load in the static crag data
-    Base.metadata.create_all(engine)
+    db.create_all()
     crags = [
         Crag(name="Gunks", 
              lat=4174, 
@@ -87,11 +72,5 @@ if __name__ == "__main__":
              wu_name="CA/Joshua_Tree")
         ]
     for crag in crags:
-        session.add(crag)
-    session.commit()
-    session.close()
-
-
-
-
-
+        db.session.add(crag)
+    db.session.commit()

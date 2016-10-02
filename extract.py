@@ -6,7 +6,6 @@ import re
 import requests
 import os
 import json
-import db
 from urllib2 import urlopen
 from datetime import date, datetime, timedelta
 

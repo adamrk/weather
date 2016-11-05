@@ -128,7 +128,7 @@ def get_fore_json(location, offline = False):
         file = open('sample_data/sample_fore.json', 'r')
         result = json.load(file)
     else:
-        response = requests.get('https://api.forecast.io/forecast/%s/%0.6f,%0.6f' % 
+        response = requests.get('https://api.darksky.net/forecast/%s/%0.6f,%0.6f' % 
             (fore_api_key, location['lat'], location['lng'] ) )
         result = response.json()
     return result
@@ -205,4 +205,4 @@ def get_actual_temp_rain(json):
 if  __name__ == "__main__":
     offline = len(sys.argv) == 2 and sys.argv[1] == 'offline'
     location = {'lat': 41.74, 'lng': -74.08, 'wu_name': 'NY/New_Paltz'}
-    print_data(location = location, offline = offline)    
+    print_data(location = location, offline = offline)

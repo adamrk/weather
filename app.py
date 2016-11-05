@@ -72,12 +72,12 @@ def aggregate(tr, dates):
 	return result
 
 ##################### Defining Views ##########################
-@app.route('/')
-def index():
-	loc = request.args.get('crag', 'Gunks')
-	return jsonify({'crag': loc, 'results': aggregated[loc]})
+# @app.route('/')
+# def index():
+# 	loc = request.args.get('crag', 'Gunks')
+# 	return jsonify({'crag': loc, 'results': aggregated[loc]})
 
-@app.route('/page')
+@app.route('/')
 def page():
 	# if offline fix date to sample data date
 #	if offline:
@@ -116,7 +116,7 @@ def page():
 @app.route('/setdefault')
 def setdefault():
 	loc = request.args.get('crag', 'Gunks')
-	response = app.make_response(redirect('/page'))
+	response = app.make_response(redirect('/'))
 	response.set_cookie('default_crag', value=loc)
 	return response
 

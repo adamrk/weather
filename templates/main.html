@@ -47,7 +47,7 @@
 	</table>
 	<h1>Other Crags:</h1>
 	{% for loc in locations %}
-	{% if loc[0] != title %}<h1><a href="{{'/page?' + loc[1]}}">{{loc[0]}}</a></h1>{% endif %}
+	{% if loc[0] != title %}<h1><a href="{{'/?' + loc[1]}}">{{loc[0]}}</a></h1>{% endif %}
 	{% endfor %}
 	<div class="end">Last Update: {{update.strftime("%b %-d, %H:%M:%S EDT")}}</div>
 	</body>
